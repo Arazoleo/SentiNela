@@ -9,6 +9,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# ===== Ferramentas de IA =====
+.claude/
+
 # ===== Segredos / env =====
 .env
 .env.*
