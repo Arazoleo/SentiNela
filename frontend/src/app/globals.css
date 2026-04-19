@@ -1,0 +1,344 @@
+@import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import "leaflet/dist/leaflet.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Variáveis ───────────────────────────────────────────── */
+:root {
+  --void:      #020b07;
+  --deep:      #041209;
+  --surface:   #061a0e;
+  --border:    #0d3320;
+  --bio:       #00d67a;
+  --bio-neon:  #00ff87;
+  --bio-dim:   rgba(0, 214, 122, 0.12);
+  --bio-glow:  rgba(0, 214, 122, 0.35);
+  --bio-soft:  rgba(0, 214, 122, 0.06);
+  --med:       #06b6d4;
+  --text:      #d4edda;
+  --muted:     #3d6e50;
+}
+
+/* ─── Reset ───────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--void);
+  color: var(--text);
+  font-family: "Inter", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  min-height: 100vh;
+}
+
+/* ─── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar       { width: 5px; height: 5px; }
+::-webkit-scrollbar-track  { background: var(--deep); }
+::-webkit-scrollbar-thumb  { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--bio); }
+
+/* ─── Fundo base ──────────────────────────────────────────── */
+.bg-sentinela {
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(0,214,122,0.07) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 40% at 90% 80%, rgba(0,197,110,0.04) 0%, transparent 60%),
+    var(--void);
+}
+
+/* ─── Grid de dados ───────────────────────────────────────── */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(0,214,122,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,214,122,0.03) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* ─── Glassmorphism ───────────────────────────────────────── */
+.glass {
+  background: rgba(6, 26, 14, 0.7);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid rgba(13, 51, 32, 0.8);
+}
+
+.glass-hover {
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.3s;
+}
+.glass-hover:hover {
+  background: rgba(8, 35, 18, 0.85);
+  border-color: rgba(0, 214, 122, 0.25);
+  box-shadow: 0 0 0 1px rgba(0,214,122,0.1), 0 8px 32px rgba(0,0,0,0.4);
+}
+
+/* ─── Glow ────────────────────────────────────────────────── */
+.glow-bio {
+  box-shadow:
+    0 0 0 1px rgba(0,214,122,0.2),
+    0 0 20px rgba(0,214,122,0.15),
+    inset 0 0 20px rgba(0,214,122,0.04);
+}
+
+.glow-bio-strong {
+  box-shadow:
+    0 0 0 1px rgba(0,214,122,0.35),
+    0 0 40px rgba(0,214,122,0.25),
+    0 0 80px rgba(0,214,122,0.1);
+}
+
+.text-glow {
+  text-shadow:
+    0 0 12px rgba(0,214,122,0.9),
+    0 0 30px rgba(0,214,122,0.5),
+    0 0 60px rgba(0,214,122,0.2);
+}
+
+.text-glow-sm {
+  text-shadow: 0 0 10px rgba(0,214,122,0.6);
+}
+
+/* ─── Gradiente de texto ──────────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #00ff87 0%, #00d67a 40%, #00a85c 80%, #10b981 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-cold {
+  background: linear-gradient(135deg, #00d67a 0%, #06b6d4 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ─── Borda gradiente ─────────────────────────────────────── */
+.border-glow {
+  position: relative;
+}
+.border-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg,
+    rgba(0,214,122,0.4) 0%,
+    transparent 40%,
+    rgba(0,197,110,0.2) 100%
+  );
+  z-index: -1;
+}
+
+/* ─── Scanner line ────────────────────────────────────────── */
+.scan-wrap { position: relative; overflow: hidden; }
+.scan-wrap::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(0,214,122,0.6) 30%,
+    rgba(0,255,135,0.9) 50%,
+    rgba(0,214,122,0.6) 70%,
+    transparent 100%
+  );
+  animation: scan 4s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ─── ECG heartbeat ───────────────────────────────────────── */
+.ecg-line {
+  width: 100%;
+  height: 32px;
+  position: relative;
+  overflow: hidden;
+}
+.ecg-line svg {
+  position: absolute;
+  left: 0; top: 0;
+  animation: ecg 3s ease-in-out infinite;
+}
+
+/* ─── Typing dots ─────────────────────────────────────────── */
+.typing-dot {
+  display: inline-block;
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--bio);
+  animation: dot-pulse 1.4s infinite ease-in-out;
+}
+.typing-dot:nth-child(1) { animation-delay: 0s; }
+.typing-dot:nth-child(2) { animation-delay: 0.2s; }
+.typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dot-pulse {
+  0%, 60%, 100% { transform: scale(0.8); opacity: 0.4; }
+  30%           { transform: scale(1.2); opacity: 1; box-shadow: 0 0 8px var(--bio); }
+}
+
+/* ─── Pulse ring (mapa) ───────────────────────────────────── */
+@keyframes pulse-ring {
+  0%   { transform: scale(1); opacity: 0.7; }
+  100% { transform: scale(3); opacity: 0; }
+}
+.pulse-ring {
+  animation: pulse-ring 2.2s ease-out infinite;
+}
+.pulse-ring-delay {
+  animation: pulse-ring 2.2s ease-out 0.7s infinite;
+}
+
+/* ─── Urgency badges ──────────────────────────────────────── */
+.badge-low       { background: rgba(250,204,21,0.1);  color: #facc15; border: 1px solid rgba(250,204,21,0.25); }
+.badge-medium    { background: rgba(251,146,60,0.1);  color: #fb923c; border: 1px solid rgba(251,146,60,0.25); }
+.badge-high      { background: rgba(248,113,113,0.1); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+.badge-emergency {
+  background: rgba(239,68,68,0.15); color: #ef4444;
+  border: 1px solid rgba(239,68,68,0.35);
+  animation: pulse-bio 1s ease-in-out infinite;
+}
+
+@keyframes pulse-bio {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
+  50%      { box-shadow: 0 0 12px 4px rgba(239,68,68,0.2); }
+}
+
+/* ─── Chip / tag ──────────────────────────────────────────── */
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; border-radius: 999px;
+  font-size: 11px; font-weight: 500; letter-spacing: 0.02em;
+  background: var(--bio-dim); color: var(--bio);
+  border: 1px solid rgba(0,214,122,0.2);
+}
+
+/* ─── Input ───────────────────────────────────────────────── */
+.input-bio {
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(4, 18, 9, 0.8);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.input-bio::placeholder { color: var(--muted); }
+.input-bio:focus {
+  border-color: rgba(0,214,122,0.4);
+  box-shadow: 0 0 0 3px rgba(0,214,122,0.08);
+}
+
+/* ─── Button primário ─────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 28px; border-radius: 10px;
+  background: linear-gradient(135deg, #00d67a, #00a85c);
+  color: #020b07; font-weight: 700; font-size: 15px;
+  border: none; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,214,122,0.3), 0 0 0 1px rgba(0,214,122,0.2);
+  transition: all 0.2s;
+}
+.btn-primary:hover {
+  background: linear-gradient(135deg, #00ff87, #00c56e);
+  box-shadow: 0 6px 30px rgba(0,255,135,0.4), 0 0 0 1px rgba(0,255,135,0.3);
+  transform: translateY(-1px);
+}
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 24px; border-radius: 10px;
+  background: transparent;
+  color: #5a8a6a; font-weight: 500; font-size: 14px;
+  border: 1px solid var(--border); cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-ghost:hover {
+  border-color: rgba(0,214,122,0.3);
+  color: var(--bio);
+  background: var(--bio-dim);
+}
+
+/* ─── Card ────────────────────────────────────────────────── */
+.card {
+  background: rgba(6, 26, 14, 0.8);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+}
+
+.card-hover {
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+}
+.card-hover:hover {
+  border-color: rgba(0,214,122,0.25);
+  box-shadow: 0 0 30px rgba(0,214,122,0.06);
+  transform: translateY(-2px);
+}
+
+/* ─── Fade-in ─────────────────────────────────────────────── */
+.fade-in { animation: fade-in 0.4s ease-out forwards; }
+.slide-up { animation: slide-up 0.5s ease-out forwards; }
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ─── Status dot ──────────────────────────────────────────── */
+.status-online {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--bio-neon);
+  box-shadow: 0 0 6px var(--bio-neon);
+  animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+  0%, 100% { box-shadow: 0 0 4px var(--bio-neon); }
+  50%      { box-shadow: 0 0 12px var(--bio-neon), 0 0 20px rgba(0,255,135,0.3); }
+}
+
+/* ─── Terminal cursor ─────────────────────────────────────── */
+.cursor::after {
+  content: "█";
+  color: var(--bio);
+  animation: blink 1.2s step-end infinite;
+  margin-left: 2px;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+/* ─── Shimmer loading ─────────────────────────────────────── */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(13,51,32,0) 0%,
+    rgba(0,214,122,0.06) 40%,
+    rgba(13,51,32,0) 80%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2s linear infinite;
+}
+
+/* ─── Número grande ───────────────────────────────────────── */
+.stat-number {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 2.5rem;
+  font-weight: 600;
+  color: var(--bio);
+  text-shadow: 0 0 20px rgba(0,214,122,0.4);
+  line-height: 1;
+}
