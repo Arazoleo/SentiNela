@@ -1,17 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
-import { useChatStore } from "@/store/chatStore";
-import ChatWindow from "@/components/chat/ChatWindow";
+import dynamic from "next/dynamic";
 import { motion } from "framer-motion";
 
+// ChatWindow usa WebSocket e localStorage — não pode ser SSR
+const ChatWindow = dynamic(() => import("@/components/chat/ChatWindow"), { ssr: false });
+
 export default function PatientChatPage() {
-  const { reset } = useChatStore();
-
-  useEffect(() => {
-    reset();
-  }, []);
-
   return (
     <div className="h-screen flex flex-col p-4 gap-4" style={{ background: "#020e07" }}>
       <motion.div

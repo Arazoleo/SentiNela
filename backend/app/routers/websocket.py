@@ -8,6 +8,7 @@ from app.core.security import decode_token
 from app.core.websocket_manager import manager, clinic_manager
 from app.models.patient import Patient
 from app.models.clinic import Clinic
+from app.models.chat_message import ChatMessage, MessageRole
 from app.models.user import UserRole
 from app.services.syndrome_service import process_message, get_or_create_session
 
@@ -21,9 +22,9 @@ async def chat_websocket(
     token: str = Query(...),
     lat: float = Query(None),
     lng: float = Query(None),
+    new_session: bool = Query(False),
     db: AsyncSession = Depends(get_db),
 ):
-    # Autentica via query param (header não funciona em WS)
     try:
         payload = decode_token(token)
         user_id = payload.get("sub")
@@ -36,22 +37,50 @@ async def chat_websocket(
         await websocket.close(code=4003)
         return
 
-    # Verifica que paciente existe
     result = await db.execute(select(Patient).where(Patient.id == user_id))
     patient = result.scalar_one_or_none()
     if not patient:
         await websocket.close(code=4004)
         return
 
-    session = await get_or_create_session(user_id, lat, lng, db)
+    session = await get_or_create_session(user_id, lat, lng, db, new_session=new_session)
+    await db.commit()
     await manager.connect(websocket, session.id)
 
-    # Mensagem de boas-vindas
-    await websocket.send_json({
-        "type": "connected",
-        "session_id": session.id,
-        "message": "Olá! Sou o Sentinela, seu assistente de saúde. Como você está se sentindo? Pode me contar seus sintomas.",
-    })
+    # Carrega histórico da sessão
+    msgs_result = await db.execute(
+        select(ChatMessage)
+        .where(ChatMessage.session_id == session.id)
+        .where(ChatMessage.role != MessageRole.system)
+        .order_by(ChatMessage.created_at.asc())
+        .limit(40)
+    )
+    history_msgs = msgs_result.scalars().all()
+
+    if history_msgs:
+        # Sessão existente — envia histórico, sem saudação nova
+        await websocket.send_json({
+            "type": "history",
+            "session_id": session.id,
+            "messages": [
+                {
+                    "id":        m.id,
+                    "role":      m.role.value,
+                    "content":   m.content,
+                    "timestamp": m.created_at.isoformat(),
+                }
+                for m in history_msgs
+            ],
+            "syndrome":       session.final_syndrome,
+            "urgency_level":  session.urgency_level,
+        })
+    else:
+        # Sessão nova — envia saudação
+        await websocket.send_json({
+            "type": "connected",
+            "session_id": session.id,
+            "message": "Olá! Sou o Sentinela, seu assistente de saúde. Como você está se sentindo? Pode me contar seus sintomas.",
+        })
 
     try:
         while True:

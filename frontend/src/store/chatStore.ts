@@ -1,10 +1,11 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
-  timestamp: Date;
+  timestamp: string; // ISO string — serializable para persist
 }
 
 export interface SyndromeResult {
@@ -27,36 +28,62 @@ export interface NearestClinic {
   phone: string;
   is_emergency: boolean;
   specialties: string[];
+  node_type?: string;
+  registered?: boolean;
 }
 
 interface ChatState {
-  sessionId: string | null;
-  messages: ChatMessage[];
-  isTyping: boolean;
-  syndrome: SyndromeResult | null;
+  sessionId:      string | null;
+  messages:       ChatMessage[];
+  isTyping:       boolean;
+  syndrome:       SyndromeResult | null;
   nearestClinics: NearestClinic[];
-  isConnected: boolean;
-  addMessage: (msg: ChatMessage) => void;
-  setTyping: (v: boolean) => void;
-  setSyndrome: (s: SyndromeResult) => void;
+  isConnected:    boolean;
+  _hasHydrated:   boolean;
+
+  addMessage:        (msg: ChatMessage) => void;
+  setMessages:       (msgs: ChatMessage[]) => void;
+  clearHistory:      () => void;
+  setTyping:         (v: boolean) => void;
+  setSyndrome:       (s: SyndromeResult | null) => void;
   setNearestClinics: (c: NearestClinic[]) => void;
-  setSessionId: (id: string) => void;
-  setConnected: (v: boolean) => void;
-  reset: () => void;
+  setSessionId:      (id: string | null) => void;
+  setConnected:      (v: boolean) => void;
+  setHasHydrated:    (v: boolean) => void;
 }
 
-export const useChatStore = create<ChatState>((set) => ({
-  sessionId: null,
-  messages: [],
-  isTyping: false,
-  syndrome: null,
-  nearestClinics: [],
-  isConnected: false,
-  addMessage: (msg) => set((s) => ({ messages: [...s.messages, msg] })),
-  setTyping: (isTyping) => set({ isTyping }),
-  setSyndrome: (syndrome) => set({ syndrome }),
-  setNearestClinics: (nearestClinics) => set({ nearestClinics }),
-  setSessionId: (sessionId) => set({ sessionId }),
-  setConnected: (isConnected) => set({ isConnected }),
-  reset: () => set({ sessionId: null, messages: [], syndrome: null, nearestClinics: [], isTyping: false }),
-}));
+export const useChatStore = create<ChatState>()(
+  persist(
+    (set) => ({
+      sessionId:      null,
+      messages:       [],
+      isTyping:       false,
+      syndrome:       null,
+      nearestClinics: [],
+      isConnected:    false,
+      _hasHydrated:   false,
+
+      addMessage:        (msg) => set((s) => ({ messages: [...s.messages, msg] })),
+      setMessages:       (messages) => set({ messages }),
+      clearHistory:      () => set({ messages: [], syndrome: null, nearestClinics: [], sessionId: null }),
+      setTyping:         (isTyping) => set({ isTyping }),
+      setSyndrome:       (syndrome) => set({ syndrome }),
+      setNearestClinics: (nearestClinics) => set({ nearestClinics }),
+      setSessionId:      (sessionId) => set({ sessionId }),
+      setConnected:      (isConnected) => set({ isConnected }),
+      setHasHydrated:    (v) => set({ _hasHydrated: v }),
+    }),
+    {
+      name: "sentinela-chat",
+      partialize: (s) => ({
+        sessionId:      s.sessionId,
+        messages:       s.messages,
+        syndrome:       s.syndrome,
+        nearestClinics: s.nearestClinics,
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
+    }
+  )
+);

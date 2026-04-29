@@ -80,7 +80,7 @@ export default function MessageBubble({ message }: { message: ChatMessage }) {
           )}
         </div>
         <span className="text-[10px] font-mono px-1" style={{ color: "#1e4a2e" }}>
-          {format(message.timestamp, "HH:mm", { locale: ptBR })}
+          {format(new Date(message.timestamp), "HH:mm", { locale: ptBR })}
         </span>
       </div>
     </motion.div>
