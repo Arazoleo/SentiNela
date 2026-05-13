@@ -43,7 +43,8 @@
       "Bash(cat)",
       "Bash(docker cp *)",
       "Bash(curl -s 'http://localhost:8000/appointments/clinic/7114956e-efab-46a7-b8bd-9e89ff8a303a/doctors?syndrome=dengue&days=3' -H 'Authorization: Bearer BAD_TOKEN')",
-      "Bash(docker stop *)"
+      "Bash(docker stop *)",
+      "Bash(/Users/arazoleonardo/medgemma/backend/.venv/bin/python *)"
     ]
   }
 }
